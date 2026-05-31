@@ -6,14 +6,20 @@ import com.studicommerciali.gestionale.entity.Fattura.StatoFattura;
 import com.studicommerciali.gestionale.repository.ClienteRepository;
 import com.studicommerciali.gestionale.repository.FatturaRepository;
 import com.studicommerciali.gestionale.repository.FornitoreRepository;
+import com.studicommerciali.gestionale.service.FatturaElettronicaService;
+import com.studicommerciali.gestionale.service.FatturaPdfService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.util.List;
 
@@ -25,6 +31,8 @@ public class FatturaController {
     private final FatturaRepository fatturaRepo;
     private final ClienteRepository clienteRepo;
     private final FornitoreRepository fornitoreRepo;
+    private final FatturaElettronicaService xmlService;
+    private final FatturaPdfService pdfService;
 
     @GetMapping
     public String lista(
@@ -126,5 +134,43 @@ public class FatturaController {
         fatturaRepo.save(f);
         ra.addFlashAttribute("successo", "Stato aggiornato.");
         return "redirect:/fatture/" + id;
+    }
+
+    @GetMapping("/{id}/xml")
+    public ResponseEntity<byte[]> scaricaXmlSDI(@PathVariable Long id) {
+        try {
+            String xmlContent = xmlService.generaXmlFatturaPA(id);
+            Fattura f = fatturaRepo.findById(id).orElseThrow();
+
+            // Il nome file standard SDI spesso include la P.IVA e un progressivo
+            String nomeFile = "IT01234567890_" + f.getNumero() + ".xml";
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nomeFile + "\"")
+                    .contentType(MediaType.APPLICATION_XML)
+                    .body(xmlContent.getBytes(StandardCharsets.UTF_8));
+
+        } catch (Exception e) {
+            // Se qualcosa va storto o la fattura non è idonea
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/{id}/pdf")
+    public org.springframework.http.ResponseEntity<byte[]> scaricaPdf(@PathVariable Long id) {
+        try {
+            byte[] pdfContent = pdfService.generaPdfFattura(id);
+            Fattura f = fatturaRepo.findById(id).orElseThrow();
+
+            String nomeFile = "Fattura_" + f.getNumero() + "_" + f.getAnno() + ".pdf";
+
+            return org.springframework.http.ResponseEntity.ok()
+                    .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nomeFile + "\"")
+                    .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                    .body(pdfContent);
+
+        } catch (Exception e) {
+            return org.springframework.http.ResponseEntity.badRequest().build();
+        }
     }
 }

@@ -1,0 +1,44 @@
+====================================================================
+DOCUMENTAZIONE: GESTIONALE STUDI COMMERCIALI E PMI
+====================================================================
+Versione: 1.0.0
+Stack Tecnologico: Java 17, Spring Boot 3.2.5, Spring Security, 
+Spring Data JPA, PostgreSQL, Thymeleaf, Bootstrap 5.
+====================================================================
+
+1. PANORAMICA DEL SISTEMA
+L'applicazione è un gestionale web-based progettato per amministrare 
+l'operatività contabile e anagrafica di uno studio commerciale o di 
+una PMI. L'architettura è basata su pattern MVC.
+
+2. SICUREZZA E AUTENTICAZIONE
+- Accesso protetto tramite Spring Security (Form Login).
+- Gestione delle password nel database tramite hashing BCrypt.
+- Sistema di validazione dello stato utente (Accesso bloccato se l'utente è disattivato).
+- Protezione CSRF abilitata e applicata su tutte le richieste POST/PUT/DELETE.
+
+3. MODULI FUNZIONALI ATTIVI
+
+A. Dashboard Strategica
+- KPI Finanziari calcolati in tempo reale: Fatturato Annuo e Costi Annui.
+- Contatore globale dei Clienti attivi.
+- Widget "Scadenzario": tabella riepilogativa con le prossime scadenze, dotata di alert visivo automatico (rosso) per le date già superate.
+
+B. Gestione Anagrafiche (Clienti e Fornitori)
+- Supporto per Persone Fisiche e Persone Giuridiche.
+- Campi anagrafici completi e validati: Ragione sociale/Nome, CF/P.IVA, Indirizzo, Contatti (Email, PEC, Telefono), Codice SDI.
+- Implementazione del "Soft Delete": l'eliminazione di un cliente/fornitore non esegue una DROP dal DB, ma imposta un flag "attivo=false", preservando l'integrità dei vecchi documenti fiscali.
+- Motore di ricerca interno multi-campo (Ricerca per nome, P.IVA o CF).
+
+C. Modulo Fatturazione
+- Gestione ciclo attivo (Fatture di vendita) e passivo (Fatture di acquisto).
+- Assegnazione intelligente: Clienti per le attive, Fornitori per le passive.
+- Ciclo di vita del documento (Stati): Bozza, Emessa, Pagata, Scaduta, Annullata.
+- Sistema a Righe Fattura: Ricalcolo dinamico di Imponibile, IVA e Totale basato sulla somma delle singole righe.
+- Numerazione sequenziale automatica su base annua.
+
+D. Scadenzario e Adempimenti
+- Sistema di tracciamento per eventi fiscali, incassi, pagamenti o adempimenti generici.
+- Possibilità di collegare una singola scadenza a una specifica fattura o anagrafica.
+- Macchina a stati per le scadenze: Aperta, Completata, Annullata.
+- Identificazione automatica dello stato "Scaduta" in base alla data odierna.

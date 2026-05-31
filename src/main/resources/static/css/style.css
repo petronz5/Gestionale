@@ -1,0 +1,99 @@
+/* --- Variabili di Sistema --- */
+:root {
+    --primary-color: #4f46e5;      /* Un indaco moderno ed elegante */
+    --primary-hover: #4338ca;
+    --bg-light: #f8fafc;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-soft: rgba(0, 0, 0, 0.05);
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text-dark);
+}
+
+/* --- Typography & Titoli --- */
+h2 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #1e293b;
+}
+
+/* --- Navbar Moderna --- */
+.navbar {
+    background-color: var(--primary-color) !important;
+    padding: 1rem 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+/* --- Cards (Dashboard e Contenitori) --- */
+.card {
+    border-radius: 16px;
+    border: 1px solid var(--border-soft) !important;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Aggiungi la classe "card-hover" nell'HTML alle card della Dashboard per questo effetto */
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* --- Tabelle --- */
+.table {
+    margin-bottom: 0;
+}
+.table > thead {
+    background-color: #f1f5f9;
+}
+.table th {
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 1rem;
+    border-bottom: none;
+}
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+}
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* --- Bottoni --- */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    transition: all 0.15s ease;
+}
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* --- Badges (Etichette di stato) --- */
+.badge {
+    padding: 0.4em 0.8em;
+    border-radius: 50rem; /* Pill shape */
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
