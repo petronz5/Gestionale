@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Fatture</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Fatture <span class="text-muted fs-5" th:text="${anno}"></span></h2>
+        <div class="d-flex gap-2">
+            <a href="/fatture/nuova?tipo=ATTIVA"  class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Fattura attiva
+            </a>
+            <a href="/fatture/nuova?tipo=PASSIVA" class="btn btn-outline-primary">
+                <i class="bi bi-plus-lg me-1"></i>Fattura passiva
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Fatturato <span th:text="${anno}"></span></div>
+                    <div class="fs-3 fw-bold text-success">
+                        € <span th:text="${#numbers.formatDecimal(totFatturato,1,'COMMA',2,'POINT')}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Costi <span th:text="${anno}"></span></div>
+                    <div class="fs-3 fw-bold text-danger">
+                        € <span th:text="${#numbers.formatDecimal(totCosti,1,'COMMA',2,'POINT')}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <form method="get" action="/fatture" class="row g-2 mb-3">
+        <input type="hidden" name="anno" th:value="${anno}"/>
+        <div class="col-auto">
+            <select name="tipo" class="form-select form-select-sm">
+                <option value="">Tutti i tipi</option>
+                <option th:each="t : ${tipi}" th:value="${t}" th:text="${t}"
+                        th:selected="${t.name() == filtroTipo}"></option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="stato" class="form-select form-select-sm">
+                <option value="">Tutti gli stati</option>
+                <option th:each="s : ${stati}" th:value="${s}" th:text="${s}"
+                        th:selected="${s.name() == filtroStato}"></option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-funnel"></i> Filtra
+            </button>
+        </div>
+    </form>
+
+    <!-- Tabella -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>N°</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th>Intestazione</th>
+                    <th>Scadenza</th>
+                    <th class="text-end">Totale</th>
+                    <th>Stato</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="f : ${fatture}">
+                    <td th:text="${f.numero}"></td>
+                    <td th:text="${#temporals.format(f.dataEmissione,'dd/MM/yyyy')}"></td>
+                    <td>
+              <span class="badge"
+                    th:classappend="${f.tipo.name() == 'ATTIVA'} ? 'bg-success' : 'bg-warning text-dark'"
+                    th:text="${f.tipo}"></span>
+                    </td>
+                    <td th:text="${f.intestazione}"></td>
+                    <td th:text="${f.dataScadenza != null ? #temporals.format(f.dataScadenza,'dd/MM/yyyy') : '—'}"></td>
+                    <td class="text-end fw-semibold">
+                        € <span th:text="${#numbers.formatDecimal(f.totale,1,'COMMA',2,'POINT')}"></span>
+                    </td>
+                    <td>
+              <span class="badge"
+                    th:classappend="${f.stato.name() == 'PAGATA'} ? 'bg-success' :
+                                    (${f.stato.name() == 'SCADUTA'} ? 'bg-danger' :
+                                    (${f.stato.name() == 'ANNULLATA'} ? 'bg-secondary' : 'bg-primary'))"
+                    th:text="${f.stato}"></span>
+                    </td>
+                    <td class="text-end">
+                        <a th:href="@{/fatture/{id}(id=${f.id})}"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a th:href="@{/fatture/{id}/modifica(id=${f.id})}"
+                           class="btn btn-sm btn-outline-secondary ms-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(fatture)}">
+                    <td colspan="8" class="text-center text-muted py-4">Nessuna fattura trovata.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Scadenzario</title></head>
+<body>
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Scadenzario</h2>
+        <a href="/scadenze/nuova" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>Nuova scadenza
+        </a>
+    </div>
+
+    <!-- Filtro stato -->
+    <div class="btn-group mb-3">
+        <a th:each="s : ${stati}"
+           th:href="@{/scadenze(stato=${s})}"
+           class="btn btn-sm"
+           th:classappend="${s.name() == filtroStato} ?
+           'btn-primary' : 'btn-outline-secondary'"
+           th:text="${s}"></a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Scadenza</th><th>Titolo</th>
+                    <th>Tipo</th><th>Cliente</th>
+                    <th class="text-end">Importo</th><th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${scadenze}"
+                    th:classappend="${s.scaduta} ? 'table-danger' : ''">
+                    <td>
+                        <span th:text="${#temporals.format(s.dataScadenza,'dd/MM/yyyy')}"></span>
+                        <i th:if="${s.scaduta}"
+                           class="bi bi-exclamation-triangle-fill text-danger ms-1"
+                           title="Scaduta"></i>
+                    </td>
+                    <td th:text="${s.titolo}"></td>
+                    <td>
+                        <span class="badge bg-secondary" th:text="${s.tipo}"></span>
+                    </td>
+                    <td th:text="${s.cliente != null ? s.cliente.displayName : '—'}"></td>
+                    <td class="text-end"
+                        th:text="${s.importo != null ? '€ ' +
+                  #numbers.formatDecimal(s.importo,1,'COMMA',2,'POINT') : '—'}">
+                    </td>
+                    <td class="text-end">
+                        <form method="post"
+                              th:action="@{/scadenze/{id}/completa(id=${s.id})}"
+                              style="display:inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}"/>
+                            <button class="btn btn-sm btn-success me-1"
+                                    title="Segna completata"
+                                    th:disabled="${s.stato.name() == 'COMPLETATA'}">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>
+                        <a th:href="@{/scadenze/{id}/modifica(id=${s.id})}"
+                           class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form method="post"
+                              th:action="@{/scadenze/{id}/elimina(id=${s.id})}"
+                              style="display:inline"
+                              onsubmit="return confirm('Eliminare?')">
+                            <input type="hidden" th:name="${_csrf.parameterName}"
+                                   th:value="${_csrf.token}"/>
+                            <button class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(scadenze)}">
+                    <td colspan="6" class="text-center text-muted py-4">
+                        Nessuna scadenza trovata.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Dettaglio cliente</title></head>
+<body>
+<section>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 th:text="${cliente.displayName}"></h2>
+    <div class="d-flex gap-2">
+      <a th:href="@{/clienti/{id}/modifica(id=${cliente.id})}"
+         class="btn btn-outline-primary">
+        <i class="bi bi-pencil me-1"></i>Modifica
+      </a>
+      <a href="/clienti" class="btn btn-outline-secondary">← Lista clienti</a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">
+          <i class="bi bi-person me-2"></i>Dati anagrafici
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-5 text-muted">Tipo</dt>
+            <dd class="col-7" th:text="${cliente.tipo}"></dd>
+
+            <dt class="col-5 text-muted">Ragione sociale</dt>
+            <dd class="col-7" th:text="${cliente.ragioneSociale}"></dd>
+
+            <dt class="col-5 text-muted">Codice fiscale</dt>
+            <dd class="col-7" th:text="${cliente.codiceFiscale ?: '—'}"></dd>
+
+            <dt class="col-5 text-muted">Partita IVA</dt>
+            <dd class="col-7" th:text="${cliente.partitaIva ?: '—'}"></dd>
+
+            <dt class="col-5 text-muted">Codice SDI</dt>
+            <dd class="col-7" th:text="${cliente.codiceSdi ?: '—'}"></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold">
+          <i class="bi bi-geo-alt me-2"></i>Contatti
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-5 text-muted">Indirizzo</dt>
+            <dd class="col-7"
+                th:text="${cliente.indirizzo != null ?
+                  cliente.indirizzo + ', ' + (cliente.cap ?: '') + ' ' +
+                  (cliente.citta ?: '') + ' (' + (cliente.provincia ?: '') + ')' : '—'}">
+            </dd>
+
+            <dt class="col-5 text-muted">Telefono</dt>
+            <dd class="col-7" th:text="${cliente.telefono ?: '—'}"></dd>
+
+            <dt class="col-5 text-muted">Email</dt>
+            <dd class="col-7">
+              <a th:if="${cliente.email != null}"
+                 th:href="'mailto:' + ${cliente.email}"
+                 th:text="${cliente.email}"></a>
+              <span th:if="${cliente.email == null}">—</span>
+            </dd>
+
+            <dt class="col-5 text-muted">PEC</dt>
+            <dd class="col-7" th:text="${cliente.pec ?: '—'}"></dd>
+
+            <dt class="col-5 text-muted">Note</dt>
+            <dd class="col-7" th:text="${cliente.note ?: '—'}"></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

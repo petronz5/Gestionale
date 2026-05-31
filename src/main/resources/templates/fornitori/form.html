@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Fornitore</title></head>
+<body>
+<section>
+  <h2 class="mb-4"
+      th:text="${fornitore.id == null} ? 'Nuovo fornitore' : 'Modifica fornitore'"></h2>
+  <form method="post" action="/fornitori/salva">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" th:field="*{id}"/>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Ragione sociale *</label>
+            <input type="text" th:field="*{ragioneSociale}"
+                   class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Partita IVA</label>
+            <input type="text" th:field="*{partitaIva}"
+                   class="form-control" maxlength="11">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Indirizzo</label>
+            <input type="text" th:field="*{indirizzo}" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">CAP</label>
+            <input type="text" th:field="*{cap}" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Città</label>
+            <input type="text" th:field="*{citta}" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Prov.</label>
+            <input type="text" th:field="*{provincia}" class="form-control" maxlength="2">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Telefono</label>
+            <input type="text" th:field="*{telefono}" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email</label>
+            <input type="email" th:field="*{email}" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Codice SDI</label>
+            <input type="text" th:field="*{codiceSdi}" class="form-control" maxlength="7">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-floppy me-1"></i>Salva
+      </button>
+      <a href="/fornitori" class="btn btn-outline-secondary">Annulla</a>
+    </div>
+  </form>
+</section>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Dettaglio fattura</title></head>
+<body>
+<section>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Fattura n. <span th:text="${fattura.numero}"></span>
+      / <span th:text="${fattura.anno}"></span></h2>
+    <div class="d-flex gap-2">
+      <a th:href="@{/fatture/{id}/modifica(id=${fattura.id})}"
+         class="btn btn-outline-primary">
+        <i class="bi bi-pencil me-1"></i>Modifica
+      </a>
+      <a href="/fatture" class="btn btn-outline-secondary">← Torna alla lista</a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-6">
+              <div class="text-muted small">Intestatario</div>
+              <div class="fw-semibold" th:text="${fattura.intestazione}"></div>
+            </div>
+            <div class="col-3">
+              <div class="text-muted small">Data emissione</div>
+              <div th:text="${#temporals.format(fattura.dataEmissione,'dd/MM/yyyy')}"></div>
+            </div>
+            <div class="col-3">
+              <div class="text-muted small">Scadenza</div>
+              <div th:text="${fattura.dataScadenza != null ?
+                   #temporals.format(fattura.dataScadenza,'dd/MM/yyyy') : '—'}"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Importi -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <table class="table mb-0">
+            <tr>
+              <td class="text-muted">Imponibile</td>
+              <td class="text-end fw-semibold">
+                € <span th:text="${#numbers.formatDecimal(fattura.imponibile,1,'COMMA',2,'POINT')}"></span>
+              </td>
+            </tr>
+            <tr>
+              <td class="text-muted">IVA (<span th:text="${fattura.aliquotaIva}"></span>%)</td>
+              <td class="text-end">
+                € <span th:text="${#numbers.formatDecimal(fattura.iva,1,'COMMA',2,'POINT')}"></span>
+              </td>
+            </tr>
+            <tr class="table-light">
+              <td class="fw-bold">Totale</td>
+              <td class="text-end fw-bold fs-5">
+                € <span th:text="${#numbers.formatDecimal(fattura.totale,1,'COMMA',2,'POINT')}"></span>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar stato -->
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold">Stato fattura</div>
+        <div class="card-body">
+          <span class="badge fs-6 mb-3"
+                th:classappend="${fattura.stato.name() == 'PAGATA'} ? 'bg-success' :
+                                (${fattura.stato.name() == 'SCADUTA'} ? 'bg-danger' : 'bg-primary')"
+                th:text="${fattura.stato}"></span>
+
+          <div class="d-grid gap-2 mt-2">
+            <form method="post"
+                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+              <input type="hidden" th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}"/>
+              <input type="hidden" name="stato" value="EMESSA"/>
+              <button class="btn btn-outline-primary w-100 mb-1"
+                      th:disabled="${fattura.stato.name() == 'EMESSA'}">
+                Segna come Emessa
+              </button>
+            </form>
+            <form method="post"
+                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+              <input type="hidden" th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}"/>
+              <input type="hidden" name="stato" value="PAGATA"/>
+              <button class="btn btn-success w-100 mb-1"
+                      th:disabled="${fattura.stato.name() == 'PAGATA'}">
+                <i class="bi bi-check-circle me-1"></i>Segna come Pagata
+              </button>
+            </form>
+            <form method="post"
+                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+              <input type="hidden" th:name="${_csrf.parameterName}"
+                     th:value="${_csrf.token}"/>
+              <input type="hidden" name="stato" value="ANNULLATA"/>
+              <button class="btn btn-outline-danger w-100"
+                      onclick="return confirm('Annullare questa fattura?')"
+                      th:disabled="${fattura.stato.name() == 'ANNULLATA'}">
+                Annulla fattura
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

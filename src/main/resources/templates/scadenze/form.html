@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Scadenza</title></head>
+<body>
+<section>
+  <h2 class="mb-4"
+      th:text="${scadenza.id == null} ? 'Nuova scadenza' : 'Modifica scadenza'"></h2>
+  <form method="post" action="/scadenze/salva">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" th:field="*{id}"/>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label">Titolo *</label>
+            <input type="text" th:field="*{titolo}"
+                   class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Tipo</label>
+            <select th:field="*{tipo}" class="form-select">
+              <option th:each="t : ${tipi}" th:value="${t}"
+                      th:text="${t}"></option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Data scadenza *</label>
+            <input type="date" th:field="*{dataScadenza}"
+                   class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Cliente (opzionale)</label>
+            <select name="clienteId" class="form-select">
+              <option value="">—</option>
+              <option th:each="c : ${clienti}"
+                      th:value="${c.id}"
+                      th:text="${c.displayName}"
+                      th:selected="${scadenza.cliente != null &&
+                                    scadenza.cliente.id == c.id}">
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Importo €</label>
+            <input type="number" th:field="*{importo}"
+                   class="form-control" step="0.01">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Note</label>
+            <textarea th:field="*{note}"
+                      class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-floppy me-1"></i>Salva
+      </button>
+      <a href="/scadenze" class="btn btn-outline-secondary">Annulla</a>
+    </div>
+  </form>
+</section>
+</body>
+</html>

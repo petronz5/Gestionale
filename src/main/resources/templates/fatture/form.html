@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Fattura</title></head>
+<body>
+<section>
+  <h2 class="mb-4"
+      th:text="${fattura.id == null} ? 'Nuova fattura' : 'Modifica fattura n.' + ${fattura.numero}">
+  </h2>
+
+  <form method="post" action="/fatture/salva">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" th:field="*{id}"/>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Intestazione</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label">Numero *</label>
+            <input type="text" th:field="*{numero}" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Anno *</label>
+            <input type="number" th:field="*{anno}" class="form-control" required>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Tipo</label>
+            <input type="text" th:field="*{tipo}" class="form-control" readonly>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Data emissione *</label>
+            <input type="date" th:field="*{dataEmissione}" class="form-control" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Data scadenza</label>
+            <input type="date" th:field="*{dataScadenza}" class="form-control">
+          </div>
+
+          <!-- Cliente (per fatture attive) -->
+          <div class="col-md-6" th:if="${fattura.tipo != null && fattura.tipo.name() == 'ATTIVA'}">
+            <label class="form-label">Cliente</label>
+            <select name="clienteId" class="form-select">
+              <option value="">— Seleziona cliente —</option>
+              <option th:each="c : ${clienti}"
+                      th:value="${c.id}"
+                      th:text="${c.displayName}"
+                      th:selected="${fattura.cliente != null && fattura.cliente.id == c.id}">
+              </option>
+            </select>
+          </div>
+
+          <!-- Fornitore (per fatture passive) -->
+          <div class="col-md-6" th:if="${fattura.tipo != null && fattura.tipo.name() == 'PASSIVA'}">
+            <label class="form-label">Fornitore</label>
+            <select name="fornitoreId" class="form-select">
+              <option value="">— Seleziona fornitore —</option>
+              <option th:each="f : ${fornitori}"
+                      th:value="${f.id}"
+                      th:text="${f.ragioneSociale}"
+                      th:selected="${fattura.fornitore != null && fattura.fornitore.id == f.id}">
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Metodo pagamento</label>
+            <select th:field="*{metodoPagamento}" class="form-select">
+              <option value="">—</option>
+              <option value="Bonifico">Bonifico</option>
+              <option value="RID">RID</option>
+              <option value="Contanti">Contanti</option>
+              <option value="Carta">Carta</option>
+              <option value="Assegno">Assegno</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Stato</label>
+            <select th:field="*{stato}" class="form-select">
+              <option th:each="s : ${stati}" th:value="${s}" th:text="${s}"
+                      th:selected="${fattura.stato == s}"></option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Importi</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Aliquota IVA %</label>
+            <input type="number" th:field="*{aliquotaIva}"
+                   class="form-control" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Imponibile €</label>
+            <input type="number" th:field="*{imponibile}"
+                   class="form-control" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">IVA €</label>
+            <input type="number" th:field="*{iva}"
+                   class="form-control" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Totale €</label>
+            <input type="number" th:field="*{totale}"
+                   class="form-control" step="0.01">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Note</label>
+            <textarea th:field="*{note}" class="form-control" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-floppy me-1"></i>Salva
+      </button>
+      <a href="/fatture" class="btn btn-outline-secondary">Annulla</a>
+    </div>
+  </form>
+</section>
+</body>
+</html>

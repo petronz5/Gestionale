@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<head><title>Dashboard</title></head>
+<body>
+<section>
+    <h2 class="mb-4">Dashboard <span th:text="${anno}"></span></h2>
+
+    <!-- KPI cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Clienti attivi</div>
+                    <div class="fs-2 fw-bold text-primary"
+                         th:text="${totaleClienti}">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Fatturato anno</div>
+                    <div class="fs-2 fw-bold text-success">
+                        € <span th:text="${#numbers.formatDecimal(fatturatoAnno,1,'COMMA',2,'POINT')}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small">Costi anno</div>
+                    <div class="fs-2 fw-bold text-danger">
+                        € <span th:text="${#numbers.formatDecimal(costiAnno,1,'COMMA',2,'POINT')}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scadenze prossime -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white fw-semibold">
+            <i class="bi bi-calendar-event me-2"></i>Scadenze aperte
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Data</th>
+                    <th>Titolo</th>
+                    <th>Tipo</th>
+                    <th>Importo</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s : ${scadenzeAperte}"
+                    th:classappend="${s.scaduta} ? 'table-danger' : ''">
+                    <td th:text="${#temporals.format(s.dataScadenza,'dd/MM/yyyy')}"></td>
+                    <td th:text="${s.titolo}"></td>
+                    <td><span class="badge bg-secondary"
+                              th:text="${s.tipo}"></span></td>
+                    <td th:text="${s.importo != null ? '€ ' + s.importo : '—'}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(scadenzeAperte)}">
+                    <td colspan="4" class="text-center text-muted py-3">
+                        Nessuna scadenza aperta.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+</body>
+</html>
