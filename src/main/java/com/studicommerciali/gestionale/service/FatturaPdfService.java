@@ -1,101 +1,104 @@
 package com.studicommerciali.gestionale.service;
 
 import com.lowagie.text.*;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.studicommerciali.gestionale.entity.Fattura;
-import com.studicommerciali.gestionale.entity.RigaFattura;
-import com.studicommerciali.gestionale.repository.FatturaRepository;
-import lombok.RequiredArgsConstructor;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import java.awt.Color;
 import java.io.ByteArrayOutputStream;
-import java.time.format.DateTimeFormatter;
 
 @Service
-@RequiredArgsConstructor
 public class FatturaPdfService {
 
-    private final FatturaRepository fatturaRepo;
+    @Autowired
+    private JavaMailSender mailSender;
 
-    public byte[] generaPdfFattura(Long fatturaId) {
-        Fattura fattura = fatturaRepo.findById(fatturaId)
-                .orElseThrow(() -> new RuntimeException("Fattura non trovata"));
-
-        Document document = new Document(PageSize.A4);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-        try {
+    public byte[] generaPdfFattura(Fattura fattura) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document(PageSize.A4);
             PdfWriter.getInstance(document, out);
             document.open();
 
-            // Font personalizzati
-            Font fontTitolo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, Color.BLACK);
-            Font fontNormale = FontFactory.getFont(FontFactory.HELVETICA, 11, Color.BLACK);
-            Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, Color.BLACK);
+            Font fontTitolo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+            Font fontSottotitolo = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
+            Font fontDati = FontFactory.getFont(FontFactory.HELVETICA, 12);
+            Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
 
-            // 1. Intestazione Documento
-            document.add(new Paragraph("FATTURA DI CORTESIA", fontTitolo));
-            document.add(new Paragraph("Numero: " + fattura.getNumero() + " / " + fattura.getAnno(), fontBold));
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            document.add(new Paragraph("Data Emissione: " + fattura.getDataEmissione().format(dtf), fontNormale));
-            document.add(Chunk.NEWLINE);
+            // Intestazione Azienda (Mittente)
+            document.add(new Paragraph("LA TUA AZIENDA S.R.L.", fontTitolo));
+            document.add(new Paragraph("Via Roma 1, 00100 Roma (RM) - P.IVA 01234567890", fontDati));
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph(" "));
 
-            // 2. Dati Destinatario
-            document.add(new Paragraph("Spett.le", fontNormale));
+            // Dati Cliente (Destinatario)
+            document.add(new Paragraph("Spett.le", fontDati));
             document.add(new Paragraph(fattura.getIntestazione(), fontBold));
-            if (fattura.getTipo() == Fattura.TipoFattura.ATTIVA && fattura.getCliente() != null) {
-                document.add(new Paragraph("P.IVA/CF: " + (fattura.getCliente().getPartitaIva() != null ? fattura.getCliente().getPartitaIva() : fattura.getCliente().getCodiceFiscale()), fontNormale));
+            if (fattura.getCliente() != null) {
+                String idFiscale = fattura.getCliente().getPartitaIva() != null
+                        ? "P.IVA: " + fattura.getCliente().getPartitaIva()
+                        : "C.F.: " + fattura.getCliente().getCodiceFiscale();
+                document.add(new Paragraph(idFiscale, fontDati));
+                if (fattura.getCliente().getIndirizzo() != null) {
+                    document.add(new Paragraph(fattura.getCliente().getIndirizzo() + ", " +
+                            fattura.getCliente().getCitta() + " (" + fattura.getCliente().getProvincia() + ")", fontDati));
+                }
             }
-            document.add(Chunk.NEWLINE);
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph(" "));
 
-            // 3. Tabella delle Righe
-            PdfPTable table = new PdfPTable(5); // 5 colonne
-            table.setWidthPercentage(100);
-            table.setWidths(new float[]{4f, 1f, 2f, 1f, 2f}); // Proporzioni larghezza colonne
+            // Titolo Documento
+            String tipoDoc = fattura.getTipo().name().equals("PREVENTIVO") ? "PREVENTIVO" : "FATTURA";
+            document.add(new Paragraph(tipoDoc + " N. " + fattura.getNumero() + " / " + fattura.getAnno(), fontTitolo));
+            document.add(new Paragraph("Data Emissione: " + (fattura.getDataEmissione() != null ? fattura.getDataEmissione().toString() : ""), fontDati));
+            document.add(new Paragraph("Metodo Pagamento: " + (fattura.getMetodoPagamento() != null ? fattura.getMetodoPagamento() : "Non specificato"), fontDati));
+            document.add(new Paragraph(" "));
 
-            // Intestazione Tabella
-            aggiungiCellaIntestazione(table, "Descrizione");
-            aggiungiCellaIntestazione(table, "Q.tà");
-            aggiungiCellaIntestazione(table, "Prezzo Unit.");
-            aggiungiCellaIntestazione(table, "IVA %");
-            aggiungiCellaIntestazione(table, "Totale Riga");
+            // Dati Economici
+            document.add(new Paragraph("RIEPILOGO IMPORTI", fontSottotitolo));
+            document.add(new Paragraph("--------------------------------------------------"));
+            document.add(new Paragraph("Imponibile: € " + (fattura.getImponibile() != null ? fattura.getImponibile() : "0.00"), fontDati));
+            document.add(new Paragraph("Aliquota IVA: " + fattura.getAliquotaIva() + "%", fontDati));
+            document.add(new Paragraph("Totale IVA: € " + (fattura.getIva() != null ? fattura.getIva() : "0.00"), fontDati));
+            document.add(new Paragraph("--------------------------------------------------"));
+            document.add(new Paragraph("TOTALE DOCUMENTO: € " + (fattura.getTotale() != null ? fattura.getTotale() : "0.00"), fontBold));
 
-            // Righe Fattura
-            for (RigaFattura riga : fattura.getRighe()) {
-                table.addCell(new Phrase(riga.getDescrizione(), fontNormale));
-                table.addCell(new Phrase(riga.getQuantita().toString(), fontNormale));
-                table.addCell(new Phrase("E. " + riga.getPrezzoUnitario().toString(), fontNormale));
-                table.addCell(new Phrase(riga.getAliquotaIva().toString() + "%", fontNormale));
-                table.addCell(new Phrase("E. " + riga.getImportoNetto().toString(), fontNormale));
+            if (fattura.getNote() != null && !fattura.getNote().isBlank()) {
+                document.add(new Paragraph(" "));
+                document.add(new Paragraph("Note:", fontBold));
+                document.add(new Paragraph(fattura.getNote(), fontDati));
             }
-            document.add(table);
-            document.add(Chunk.NEWLINE);
 
-            // 4. Riepilogo Totali
-            Paragraph riepilogo = new Paragraph();
-            riepilogo.setAlignment(Element.ALIGN_RIGHT);
-            riepilogo.add(new Phrase("Imponibile: E. " + fattura.getImponibile() + "\n", fontNormale));
-            riepilogo.add(new Phrase("Totale IVA: E. " + fattura.getIva() + "\n", fontNormale));
-            riepilogo.add(new Phrase("TOTALE DOCUMENTO: E. " + fattura.getTotale(), fontBold));
-            document.add(riepilogo);
-
-        } catch (DocumentException e) {
-            e.printStackTrace();
-        } finally {
             document.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Errore durante la generazione del PDF", e);
         }
-
-        return out.toByteArray();
     }
 
-    private void aggiungiCellaIntestazione(PdfPTable table, String testo) {
-        PdfPCell cell = new PdfPCell(new Phrase(testo, FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11)));
-        cell.setBackgroundColor(Color.LIGHT_GRAY);
-        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        cell.setPadding(5);
-        table.addCell(cell);
+    public void inviaFatturaViaEmail(Fattura fattura, String emailDestinatario) {
+        try {
+            byte[] pdfBytes = generaPdfFattura(fattura);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            String tipoDoc = fattura.getTipo().name().equals("PREVENTIVO") ? "Preventivo" : "Fattura";
+
+            helper.setTo(emailDestinatario);
+            helper.setSubject("Invio " + tipoDoc + " n. " + fattura.getNumero() + "/" + fattura.getAnno());
+            helper.setText("Gentile Cliente,\n\nIn allegato le trasmettiamo copia di cortesia in formato PDF del documento in oggetto.\n\nCordiali saluti.");
+
+            String nomeFile = tipoDoc + "_" + fattura.getNumero() + "_" + fattura.getAnno() + ".pdf";
+            helper.addAttachment(nomeFile, new ByteArrayResource(pdfBytes));
+
+            mailSender.send(message);
+        } catch (Exception e) {
+            throw new RuntimeException("Errore durante l'invio dell'email", e);
+        }
     }
 }

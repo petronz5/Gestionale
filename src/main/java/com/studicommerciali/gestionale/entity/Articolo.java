@@ -32,6 +32,10 @@ public class Articolo {
     private BigDecimal prezzoBase = BigDecimal.ZERO;
 
     @NotNull
+    @Column(nullable = false, precision = 10, scale = 3)
+    private BigDecimal giacenza = BigDecimal.ZERO;
+
+    @NotNull
     @Column(name = "aliquota_iva", nullable = false, precision = 5, scale = 2)
     private BigDecimal aliquotaIva = new BigDecimal("22.00");
 

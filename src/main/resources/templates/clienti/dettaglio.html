@@ -1,78 +1,80 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
 <head><title>Dettaglio cliente</title></head>
 <body>
 <section>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 th:text="${cliente.displayName}"></h2>
-    <div class="d-flex gap-2">
-      <a th:href="@{/clienti/{id}/modifica(id=${cliente.id})}"
-         class="btn btn-outline-primary">
-        <i class="bi bi-pencil me-1"></i>Modifica
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-slate-800" th:text="${cliente.displayName}"></h2>
+    <div class="flex gap-3">
+      <a href="/clienti" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors shadow-sm">
+        <i class="bi bi-arrow-left me-2"></i>Torna alla lista
       </a>
-      <a href="/clienti" class="btn btn-outline-secondary">← Lista clienti</a>
+      <a th:href="@{/clienti/{id}/modifica(id=${cliente.id})}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors shadow-sm">
+        <i class="bi bi-pencil me-2"></i>Modifica Dati
+      </a>
     </div>
   </div>
 
-  <div class="row g-3">
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white fw-semibold">
-          <i class="bi bi-person me-2"></i>Dati anagrafici
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-semibold text-slate-800 flex items-center">
+          <i class="bi bi-person text-indigo-500 me-2 text-lg"></i>Dati Anagrafici
+        </h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Tipo</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.tipo}"></div>
         </div>
-        <div class="card-body">
-          <dl class="row mb-0">
-            <dt class="col-5 text-muted">Tipo</dt>
-            <dd class="col-7" th:text="${cliente.tipo}"></dd>
-
-            <dt class="col-5 text-muted">Ragione sociale</dt>
-            <dd class="col-7" th:text="${cliente.ragioneSociale}"></dd>
-
-            <dt class="col-5 text-muted">Codice fiscale</dt>
-            <dd class="col-7" th:text="${cliente.codiceFiscale ?: '—'}"></dd>
-
-            <dt class="col-5 text-muted">Partita IVA</dt>
-            <dd class="col-7" th:text="${cliente.partitaIva ?: '—'}"></dd>
-
-            <dt class="col-5 text-muted">Codice SDI</dt>
-            <dd class="col-7" th:text="${cliente.codiceSdi ?: '—'}"></dd>
-          </dl>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Ragione Sociale</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.ragioneSociale}"></div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Codice Fiscale</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.codiceFiscale ?: '—'}"></div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Partita IVA</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.partitaIva ?: '—'}"></div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Codice SDI</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.codiceSdi ?: '—'}"></div>
         </div>
       </div>
     </div>
 
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white fw-semibold">
-          <i class="bi bi-geo-alt me-2"></i>Contatti
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="font-semibold text-slate-800 flex items-center">
+          <i class="bi bi-geo-alt text-indigo-500 me-2 text-lg"></i>Recapiti e Contatti
+        </h3>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Indirizzo</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.indirizzo != null ? cliente.indirizzo + ', ' + (cliente.cap ?: '') + ' ' + (cliente.citta ?: '') + ' (' + (cliente.provincia ?: '') + ')' : '—'}"></div>
         </div>
-        <div class="card-body">
-          <dl class="row mb-0">
-            <dt class="col-5 text-muted">Indirizzo</dt>
-            <dd class="col-7"
-                th:text="${cliente.indirizzo != null ?
-                  cliente.indirizzo + ', ' + (cliente.cap ?: '') + ' ' +
-                  (cliente.citta ?: '') + ' (' + (cliente.provincia ?: '') + ')' : '—'}">
-            </dd>
-
-            <dt class="col-5 text-muted">Telefono</dt>
-            <dd class="col-7" th:text="${cliente.telefono ?: '—'}"></dd>
-
-            <dt class="col-5 text-muted">Email</dt>
-            <dd class="col-7">
-              <a th:if="${cliente.email != null}"
-                 th:href="'mailto:' + ${cliente.email}"
-                 th:text="${cliente.email}"></a>
-              <span th:if="${cliente.email == null}">—</span>
-            </dd>
-
-            <dt class="col-5 text-muted">PEC</dt>
-            <dd class="col-7" th:text="${cliente.pec ?: '—'}"></dd>
-
-            <dt class="col-5 text-muted">Note</dt>
-            <dd class="col-7" th:text="${cliente.note ?: '—'}"></dd>
-          </dl>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Telefono</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.telefono ?: '—'}"></div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Email</div>
+          <div class="col-span-2 font-medium text-indigo-600">
+            <a th:if="${cliente.email != null}" th:href="'mailto:' + ${cliente.email}" class="hover:underline" th:text="${cliente.email}"></a>
+            <span th:if="${cliente.email == null}" class="text-slate-900">—</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">PEC</div>
+          <div class="col-span-2 font-medium text-slate-900" th:text="${cliente.pec ?: '—'}"></div>
+        </div>
+        <div class="grid grid-cols-3">
+          <div class="text-sm text-slate-500">Note</div>
+          <div class="col-span-2 text-sm text-slate-700" th:text="${cliente.note ?: '—'}"></div>
         </div>
       </div>
     </div>

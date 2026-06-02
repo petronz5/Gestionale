@@ -12,4 +12,5 @@ public interface ScadenzaRepository extends JpaRepository<Scadenza, Long> {
 
     List<Scadenza> findByDataScadenzaBetweenAndStatoOrderByDataScadenzaAsc(
             LocalDate da, LocalDate a, StatoScadenza stato);
+    List<Scadenza> findByDataScadenzaAndStato(LocalDate dataScadenza, StatoScadenza stato);
 }

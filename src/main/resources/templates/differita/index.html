@@ -1,37 +1,36 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
-<head><title>Fatturazione Differita</title></head>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Fatturazione Differita', ~{::section})}">
 <body>
 <section>
-    <div class="mb-4">
-        <h2>Fatturazione Differita Mensile</h2>
-        <p class="text-muted">Seleziona un cliente per visualizzare i documenti di trasporto pronti per la fatturazione.</p>
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-800">Fatturazione Differita Mensile</h2>
+        <p class="text-slate-500 mt-1">Seleziona un cliente per visualizzare i Documenti di Trasporto (DDT) pronti per la conversione in fattura.</p>
     </div>
 
-    <div class="row g-3">
-        <div class="col-md-4" th:each="cliente : ${clienti}">
-            <a th:href="@{/fatturazione-differita/cliente/{id}(id=${cliente.id})}" class="text-decoration-none">
-                <div class="card border-0 shadow-sm card-hover h-100">
-                    <div class="card-body text-center py-4">
-                        <div class="mb-3">
-                            <i class="bi bi-building fs-1 text-primary"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-1" th:text="${cliente.displayName}"></h5>
-                        <div class="text-muted small">
-                            <i class="bi bi-truck me-1"></i>DDT in attesa di fatturazione
-                        </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <div th:each="cliente : ${clienti}">
+            <a th:href="@{/fatturazione-differita/cliente/{id}(id=${cliente.id})}" class="block group h-full">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 h-full flex flex-col items-center text-center transition-all duration-200 group-hover:border-indigo-500 group-hover:shadow-md group-hover:-translate-y-1">
+                    <div class="w-16 h-16 rounded-full bg-indigo-50 flex items-center justify-center mb-4 group-hover:bg-indigo-100 transition-colors">
+                        <i class="bi bi-building text-3xl text-indigo-600"></i>
+                    </div>
+                    <h5 class="font-bold text-lg text-slate-800 mb-2" th:text="${cliente.displayName}"></h5>
+                    <div class="text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                        <i class="bi bi-truck me-1"></i>DDT da fatturare
                     </div>
                 </div>
             </a>
         </div>
 
-        <div class="col-12" th:if="${#lists.isEmpty(clienti)}">
-            <div class="alert alert-success border-0 shadow-sm text-center py-4">
-                <i class="bi bi-check-circle fs-2 d-block mb-2"></i>
-                <h5 class="fw-bold mb-0">Tutto in regola!</h5>
-                <p class="mb-0 text-muted">Non ci sono DDT in sospeso da fatturare per nessun cliente.</p>
+        <div class="col-span-full" th:if="${#lists.isEmpty(clienti)}">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-12 text-center shadow-sm">
+                <i class="bi bi-check-circle-fill text-6xl text-emerald-400 mb-4 inline-block"></i>
+                <h3 class="text-2xl font-bold text-emerald-800 mb-2">Tutto in regola!</h3>
+                <p class="text-emerald-600">Non ci sono DDT in sospeso da fatturare per nessun cliente.</p>
             </div>
         </div>
+
     </div>
 </section>
 </body>

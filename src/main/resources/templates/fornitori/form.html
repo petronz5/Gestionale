@@ -1,63 +1,68 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
-<head><title>Fornitore</title></head>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Anagrafica Fornitore', ~{::section})}">
 <body>
 <section>
-  <h2 class="mb-4"
-      th:text="${fornitore.id == null} ? 'Nuovo fornitore' : 'Modifica fornitore'"></h2>
-  <form method="post" action="/fornitori/salva">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-slate-800" th:text="${fornitore.id == null} ? 'Nuovo Fornitore' : 'Modifica Fornitore'"></h2>
+  </div>
+
+  <form method="post" action="/fornitori/salva" th:object="${fornitore}" class="max-w-5xl space-y-6">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
     <input type="hidden" th:field="*{id}"/>
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label">Ragione sociale *</label>
-            <input type="text" th:field="*{ragioneSociale}"
-                   class="form-control" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Partita IVA</label>
-            <input type="text" th:field="*{partitaIva}"
-                   class="form-control" maxlength="11">
-          </div>
-          <div class="col-md-5">
-            <label class="form-label">Indirizzo</label>
-            <input type="text" th:field="*{indirizzo}" class="form-control">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">CAP</label>
-            <input type="text" th:field="*{cap}" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Città</label>
-            <input type="text" th:field="*{citta}" class="form-control">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">Prov.</label>
-            <input type="text" th:field="*{provincia}" class="form-control" maxlength="2">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Telefono</label>
-            <input type="text" th:field="*{telefono}" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Email</label>
-            <input type="email" th:field="*{email}" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Codice SDI</label>
-            <input type="text" th:field="*{codiceSdi}" class="form-control" maxlength="7">
-          </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+        <h3 class="font-semibold text-slate-800 flex items-center"><i class="bi bi-building text-indigo-500 me-2"></i>Dati Principali</h3>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-8">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Ragione sociale *</label>
+          <input type="text" th:field="*{ragioneSociale}" required class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Partita IVA</label>
+          <input type="text" th:field="*{partitaIva}" maxlength="11" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 uppercase">
+        </div>
+
+        <div class="md:col-span-6">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Indirizzo</label>
+          <input type="text" th:field="*{indirizzo}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">CAP</label>
+          <input type="text" th:field="*{cap}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Città</label>
+          <input type="text" th:field="*{citta}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-1">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Prov.</label>
+          <input type="text" th:field="*{provincia}" maxlength="2" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 text-center uppercase">
+        </div>
+
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Telefono</label>
+          <input type="text" th:field="*{telefono}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Email</label>
+          <input type="email" th:field="*{email}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Codice SDI</label>
+          <input type="text" th:field="*{codiceSdi}" maxlength="7" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 uppercase">
         </div>
       </div>
     </div>
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-floppy me-1"></i>Salva
+
+    <div class="flex gap-4">
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-8 rounded-lg shadow-sm transition-colors flex items-center">
+        <i class="bi bi-floppy me-2"></i>Salva Fornitore
       </button>
-      <a href="/fornitori" class="btn btn-outline-secondary">Annulla</a>
+      <a href="/fornitori" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-8 rounded-lg shadow-sm transition-colors text-center">
+        Annulla
+      </a>
     </div>
   </form>
 </section>

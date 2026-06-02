@@ -65,6 +65,7 @@ public class Scadenza {
 
     public boolean isScaduta() {
         return stato == StatoScadenza.APERTA
+                && dataScadenza != null
                 && dataScadenza.isBefore(LocalDate.now());
     }
 

@@ -1,5 +1,6 @@
 package com.studicommerciali.gestionale.repository;
 
+import com.studicommerciali.gestionale.entity.Azienda;
 import com.studicommerciali.gestionale.entity.Cliente;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -8,6 +9,8 @@ import java.util.List;
 
 public interface ClienteRepository extends JpaRepository<Cliente, Long> {
 
+    List<Cliente> findByAziendaAndAttivoTrueOrderByRagioneSocialeAsc(Azienda azienda);
+    List<Cliente> findByAziendaAndRagioneSocialeContainingIgnoreCaseAndAttivoTrue(Azienda azienda, String q);
     List<Cliente> findByAttivoTrueOrderByRagioneSocialeAsc();
 
     @Query("""

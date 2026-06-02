@@ -104,6 +104,7 @@ public class Fattura {
         return "N/D";
     }
 
-    public enum TipoFattura  { ATTIVA, PASSIVA, NOTA_CREDITO }
-    public enum StatoFattura { BOZZA, EMESSA, PAGATA, SCADUTA, ANNULLATA }
+    public enum TipoFattura  { ATTIVA, PASSIVA, NOTA_CREDITO, PREVENTIVO }
+    public enum StatoFattura { BOZZA, EMESSA, PAGATA, SCADUTA, ANNULLATA, ACCETTATA, RIFIUTATA }
+
 }

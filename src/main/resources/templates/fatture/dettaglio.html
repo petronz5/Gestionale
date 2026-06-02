@@ -1,112 +1,158 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
-<head><title>Dettaglio fattura</title></head>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Dettaglio Documento', ~{::section})}">
 <body>
 <section>
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Fattura n. <span th:text="${fattura.numero}"></span>
-      / <span th:text="${fattura.anno}"></span></h2>
-    <div class="d-flex gap-2">
-      <a th:href="@{/fatture/{id}/modifica(id=${fattura.id})}"
-         class="btn btn-outline-primary">
-        <i class="bi bi-pencil me-1"></i>Modifica
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-slate-800">
+      <span th:text="${fattura.tipo?.name() == 'PREVENTIVO' ? 'Preventivo' : 'Fattura'}"></span> n.
+      <span class="text-indigo-600" th:text="${fattura.numero}"></span> / <span th:text="${fattura.anno}"></span>
+    </h2>
+    <div class="flex gap-3">
+      <a href="/fatture" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors shadow-sm">
+        <i class="bi bi-arrow-left me-2"></i>Torna alla lista
       </a>
-      <a href="/fatture" class="btn btn-outline-secondary">← Torna alla lista</a>
+      <a th:href="@{/fatture/{id}/modifica(id=${fattura.id})}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors shadow-sm">
+        <i class="bi bi-pencil me-2"></i>Modifica Dati
+      </a>
     </div>
   </div>
 
-  <div class="row g-3">
-    <div class="col-md-8">
-      <div class="card border-0 shadow-sm mb-3">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-6">
-              <div class="text-muted small">Intestatario</div>
-              <div class="fw-semibold" th:text="${fattura.intestazione}"></div>
-            </div>
-            <div class="col-3">
-              <div class="text-muted small">Data emissione</div>
-              <div th:text="${#temporals.format(fattura.dataEmissione,'dd/MM/yyyy')}"></div>
-            </div>
-            <div class="col-3">
-              <div class="text-muted small">Scadenza</div>
-              <div th:text="${fattura.dataScadenza != null ?
-                   #temporals.format(fattura.dataScadenza,'dd/MM/yyyy') : '—'}"></div>
-            </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-slate-800 text-white rounded-xl shadow-sm p-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div class="col-span-2">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Intestatario</div>
+            <div class="text-lg font-medium text-indigo-300" th:text="${fattura.intestazione}"></div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Data Emissione</div>
+            <div class="text-lg font-medium" th:text="${fattura.dataEmissione != null ? #temporals.format(fattura.dataEmissione,'dd/MM/yyyy') : '—'}"></div>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Scadenza</div>
+            <div class="text-lg font-medium" th:text="${fattura.dataScadenza != null ? #temporals.format(fattura.dataScadenza,'dd/MM/yyyy') : '—'}"></div>
           </div>
         </div>
       </div>
 
-      <!-- Importi -->
-      <div class="card border-0 shadow-sm">
-        <div class="card-body">
-          <table class="table mb-0">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <h3 class="font-semibold text-slate-800 flex items-center">
+            <i class="bi bi-calculator text-indigo-500 me-2"></i>Riepilogo Importi
+          </h3>
+        </div>
+        <div class="p-6">
+          <table class="w-full text-left border-collapse">
+            <tbody class="divide-y divide-slate-100">
             <tr>
-              <td class="text-muted">Imponibile</td>
-              <td class="text-end fw-semibold">
-                € <span th:text="${#numbers.formatDecimal(fattura.imponibile,1,'COMMA',2,'POINT')}"></span>
+              <td class="py-3 text-slate-500 font-medium">Imponibile</td>
+              <td class="py-3 text-right font-semibold text-slate-900">
+                € <span th:text="${fattura.imponibile != null ? #numbers.formatDecimal(fattura.imponibile,1,'COMMA',2,'POINT') : '0,00'}"></span>
               </td>
             </tr>
             <tr>
-              <td class="text-muted">IVA (<span th:text="${fattura.aliquotaIva}"></span>%)</td>
-              <td class="text-end">
-                € <span th:text="${#numbers.formatDecimal(fattura.iva,1,'COMMA',2,'POINT')}"></span>
+              <td class="py-3 text-slate-500 font-medium">IVA (<span th:text="${fattura.aliquotaIva ?: '0'}"></span>%)</td>
+              <td class="py-3 text-right text-slate-700">
+                € <span th:text="${fattura.iva != null ? #numbers.formatDecimal(fattura.iva,1,'COMMA',2,'POINT') : '0,00'}"></span>
               </td>
             </tr>
-            <tr class="table-light">
-              <td class="fw-bold">Totale</td>
-              <td class="text-end fw-bold fs-5">
-                € <span th:text="${#numbers.formatDecimal(fattura.totale,1,'COMMA',2,'POINT')}"></span>
+            <tr class="bg-slate-50 border-t-2 border-slate-200">
+              <td class="py-4 px-2 font-bold text-lg text-slate-900 uppercase">Totale Documento</td>
+              <td class="py-4 px-2 text-right font-bold text-2xl text-indigo-600">
+                € <span th:text="${fattura.totale != null ? #numbers.formatDecimal(fattura.totale,1,'COMMA',2,'POINT') : '0,00'}"></span>
               </td>
             </tr>
+            </tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="bg-indigo-900 rounded-xl shadow-sm border border-indigo-800 overflow-hidden mt-6" th:if="${fattura.tipo?.name() == 'ATTIVA'}">
+        <div class="px-6 py-4 border-b border-indigo-800 bg-indigo-950 flex justify-between items-center">
+          <h3 class="font-semibold text-white flex items-center">
+            <i class="bi bi-cloud-arrow-down text-indigo-400 me-2"></i>Azioni Documento
+          </h3>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <a th:href="@{/fatture/{id}/pdf(id=${fattura.id})}" class="flex flex-col items-center justify-center p-4 rounded-lg bg-indigo-800 hover:bg-indigo-700 border border-indigo-600 transition-colors text-white text-center">
+            <i class="bi bi-file-earmark-pdf text-3xl mb-2 text-rose-400"></i>
+            <span class="font-semibold text-sm">Scarica PDF</span>
+          </a>
+
+          <form method="post" th:action="@{/fatture/{id}/invia-email(id=${fattura.id})}" class="h-full">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit" onclick="return confirm('Inviare la fattura via email al cliente?')" class="w-full h-full flex flex-col items-center justify-center p-4 rounded-lg bg-indigo-800 hover:bg-indigo-700 border border-indigo-600 transition-colors text-white text-center">
+              <i class="bi bi-envelope-paper text-3xl mb-2 text-blue-400"></i>
+              <span class="font-semibold text-sm">Invia Email</span>
+            </button>
+          </form>
+
+          <a th:href="@{/fatture/{id}/xml(id=${fattura.id})}" class="flex flex-col items-center justify-center p-4 rounded-lg bg-indigo-800 hover:bg-indigo-700 border border-indigo-600 transition-colors text-white text-center">
+            <i class="bi bi-filetype-xml text-3xl mb-2 text-emerald-400"></i>
+            <span class="font-semibold text-sm">XML per SDI</span>
+          </a>
+
         </div>
       </div>
     </div>
 
-    <!-- Sidebar stato -->
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white fw-semibold">Stato fattura</div>
-        <div class="card-body">
-          <span class="badge fs-6 mb-3"
-                th:classappend="${fattura.stato.name() == 'PAGATA'} ? 'bg-success' :
-                                (${fattura.stato.name() == 'SCADUTA'} ? 'bg-danger' : 'bg-primary')"
-                th:text="${fattura.stato}"></span>
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 sticky top-6">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <h3 class="font-semibold text-slate-800 flex items-center">
+            <i class="bi bi-flag text-indigo-500 me-2"></i>Stato Documento
+          </h3>
+        </div>
+        <div class="p-6">
+          <div class="flex justify-center mb-6">
+              <span class="px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wider border shadow-sm"
+                    th:classappend="${fattura.stato?.name() == 'PAGATA' || fattura.stato?.name() == 'ACCETTATA'} ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : (${fattura.stato?.name() == 'SCADUTA' || fattura.stato?.name() == 'RIFIUTATA'} ? 'bg-rose-100 text-rose-800 border-rose-300' : 'bg-blue-100 text-blue-800 border-blue-300')"
+                    th:text="${fattura.stato}"></span>
+          </div>
 
-          <div class="d-grid gap-2 mt-2">
-            <form method="post"
-                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
-              <input type="hidden" th:name="${_csrf.parameterName}"
-                     th:value="${_csrf.token}"/>
+          <div class="space-y-3">
+            <form method="post" th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
               <input type="hidden" name="stato" value="EMESSA"/>
-              <button class="btn btn-outline-primary w-100 mb-1"
-                      th:disabled="${fattura.stato.name() == 'EMESSA'}">
-                Segna come Emessa
+              <button class="w-full flex items-center justify-center py-2 px-4 border border-blue-200 rounded-lg shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      th:disabled="${fattura.stato?.name() == 'EMESSA'}">
+                <i class="bi bi-send me-2"></i>Segna come Emessa
               </button>
             </form>
-            <form method="post"
-                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
-              <input type="hidden" th:name="${_csrf.parameterName}"
-                     th:value="${_csrf.token}"/>
+
+            <form method="post" th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
               <input type="hidden" name="stato" value="PAGATA"/>
-              <button class="btn btn-success w-100 mb-1"
-                      th:disabled="${fattura.stato.name() == 'PAGATA'}">
-                <i class="bi bi-check-circle me-1"></i>Segna come Pagata
+              <button class="w-full flex items-center justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      th:disabled="${fattura.stato?.name() == 'PAGATA'}">
+                <i class="bi bi-check-circle-fill me-2"></i>Segna come Pagata
               </button>
             </form>
-            <form method="post"
-                  th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
-              <input type="hidden" th:name="${_csrf.parameterName}"
-                     th:value="${_csrf.token}"/>
-              <input type="hidden" name="stato" value="ANNULLATA"/>
-              <button class="btn btn-outline-danger w-100"
-                      onclick="return confirm('Annullare questa fattura?')"
-                      th:disabled="${fattura.stato.name() == 'ANNULLATA'}">
-                Annulla fattura
-              </button>
-            </form>
+
+            <div class="pt-4 mt-4 border-t border-slate-200" th:if="${fattura.tipo?.name() == 'PREVENTIVO'}">
+              <form method="post" th:action="@{/fatture/{id}/converti-preventivo(id=${fattura.id})}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <button class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                        onclick="return confirm('Vuoi convertire questo preventivo in una vera Fattura Attiva?')"
+                        th:disabled="${fattura.stato?.name() == 'ACCETTATA'}">
+                  <i class="bi bi-magic me-2"></i>Converti in Fattura
+                </button>
+              </form>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-200">
+              <form method="post" th:action="@{/fatture/{id}/stato(id=${fattura.id})}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="stato" value="ANNULLATA"/>
+                <button class="w-full flex items-center justify-center py-2 px-4 border border-rose-200 rounded-lg shadow-sm text-sm font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        onclick="return confirm('Sei sicuro di voler annullare definitivamente questo documento?')"
+                        th:disabled="${fattura.stato?.name() == 'ANNULLATA'}">
+                  <i class="bi bi-x-circle me-2"></i>Annulla Documento
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </div>

@@ -54,6 +54,10 @@ public class Cliente {
     @Column(nullable = false)
     private Boolean attivo = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "azienda_id", nullable = false)
+    private Azienda azienda;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

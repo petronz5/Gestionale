@@ -1,77 +1,185 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
 <head><title>Dashboard</title></head>
 <body>
 <section>
-    <h2 class="mb-4">Dashboard <span th:text="${anno}"></span></h2>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- KPI cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Clienti attivi</div>
-                    <div class="fs-2 fw-bold text-primary"
-                         th:text="${totaleClienti}">0</div>
+    <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-slate-800">Riepilogo <span th:text="${anno}" class="text-indigo-600"></span></h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center justify-between">
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Clienti attivi</div>
+                <div class="text-3xl font-bold text-indigo-600" th:text="${totaleClienti}">0</div>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 text-2xl"><i class="bi bi-people"></i></div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center justify-between">
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Fatturato anno</div>
+                <div class="text-3xl font-bold text-emerald-600">
+                    € <span th:text="${fatturatoAnno != null ? #numbers.formatDecimal(fatturatoAnno,1,'COMMA',2,'POINT') : '0,00'}"></span>
                 </div>
             </div>
+            <div class="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 text-2xl"><i class="bi bi-graph-up-arrow"></i></div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Fatturato anno</div>
-                    <div class="fs-2 fw-bold text-success">
-                        € <span th:text="${#numbers.formatDecimal(fatturatoAnno,1,'COMMA',2,'POINT')}">0</span>
-                    </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex items-center justify-between">
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Costi anno</div>
+                <div class="text-3xl font-bold text-rose-600">
+                    € <span th:text="${costiAnno != null ? #numbers.formatDecimal(costiAnno,1,'COMMA',2,'POINT') : '0,00'}"></span>
                 </div>
             </div>
+            <div class="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 text-2xl"><i class="bi bi-graph-down-arrow"></i></div>
         </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="text-muted small">Costi anno</div>
-                    <div class="fs-2 fw-bold text-danger">
-                        € <span th:text="${#numbers.formatDecimal(costiAnno,1,'COMMA',2,'POINT')}">0</span>
-                    </div>
-                </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h3 class="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4 flex items-center">
+                <i class="bi bi-bar-chart-fill text-indigo-500 me-2"></i> Andamento Mensile <span th:text="${anno}" class="ml-1"></span>
+            </h3>
+            <div class="relative h-[300px]">
+                <canvas id="monthlyChart"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h3 class="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-4 flex items-center">
+                <i class="bi bi-pie-chart-fill text-indigo-500 me-2"></i> Entrate vs Uscite
+            </h3>
+            <div class="relative h-[300px] flex justify-center">
+                <canvas id="ratioChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Scadenze prossime -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white fw-semibold">
-            <i class="bi bi-calendar-event me-2"></i>Scadenze aperte
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+            <h3 class="font-semibold text-slate-800 flex items-center">
+                <i class="bi bi-calendar-event text-indigo-500 me-2"></i>Scadenze in primo piano
+            </h3>
+            <a href="/scadenze" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">Vedi tutte &rarr;</a>
         </div>
-        <div class="card-body p-0">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                    <th>Data</th>
-                    <th>Titolo</th>
-                    <th>Tipo</th>
-                    <th>Importo</th>
+                    <th class="px-6 py-3 font-medium">Data</th>
+                    <th class="px-6 py-3 font-medium">Titolo</th>
+                    <th class="px-6 py-3 font-medium">Tipo</th>
+                    <th class="px-6 py-3 font-medium text-right">Importo</th>
                 </tr>
                 </thead>
-                <tbody>
-                <tr th:each="s : ${scadenzeAperte}"
-                    th:classappend="${s.scaduta} ? 'table-danger' : ''">
-                    <td th:text="${#temporals.format(s.dataScadenza,'dd/MM/yyyy')}"></td>
-                    <td th:text="${s.titolo}"></td>
-                    <td><span class="badge bg-secondary"
-                              th:text="${s.tipo}"></span></td>
-                    <td th:text="${s.importo != null ? '€ ' + s.importo : '—'}"></td>
+                <tbody class="divide-y divide-slate-100">
+                <tr th:each="s : ${scadenzeAperte}" th:classappend="${s.scaduta} ? 'bg-rose-50' : 'hover:bg-slate-50'">
+                    <td class="px-6 py-4 text-sm font-medium" th:classappend="${s.scaduta} ? 'text-rose-600' : 'text-slate-900'">
+                        <span th:text="${s.dataScadenza != null ? #temporals.format(s.dataScadenza,'dd/MM/yyyy') : '—'}"></span>
+                        <i th:if="${s.scaduta}" class="bi bi-exclamation-circle-fill text-rose-500 ml-1" title="Scaduta!"></i>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-slate-700 font-medium" th:text="${s.titolo}"></td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="px-2 py-1 bg-white border border-slate-200 text-slate-600 rounded-md text-xs font-semibold shadow-sm" th:text="${s.tipo}"></span>
+                    </td>
+                    <td class="px-6 py-4 text-sm font-bold text-right text-slate-900" th:text="${s.importo != null ? '€ ' + #numbers.formatDecimal(s.importo,1,'COMMA',2,'POINT') : '—'}"></td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(scadenzeAperte)}">
-                    <td colspan="4" class="text-center text-muted py-3">
-                        Nessuna scadenza aperta.
+                    <td colspan="4" class="px-6 py-10 text-center text-slate-500">
+                        <i class="bi bi-check-circle text-4xl text-emerald-400 block mb-2"></i>
+                        Ottimo lavoro! Nessuna scadenza in sospeso.
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        // 1. Recupero i dati reali da Spring Boot tramite Thymeleaf
+        const fatturatoReale = /*[[${fatturatoAnno != null ? fatturatoAnno : 0}]]*/ 0;
+        const costiReali = /*[[${costiAnno != null ? costiAnno : 0}]]*/ 0;
+
+        // Palette Colori Tailwind
+        const emerald = '#059669'; // Successo/Entrate
+        const rose = '#e11d48';    // Pericolo/Uscite
+        const slate = '#f1f5f9';   // Griglia
+
+        // --- INIZIALIZZAZIONE GRAFICO A CIAMBELLA (Dati Reali) ---
+        const ctxRatio = document.getElementById('ratioChart').getContext('2d');
+        new Chart(ctxRatio, {
+            type: 'doughnut',
+            data: {
+                labels: ['Fatturato', 'Costi'],
+                datasets: [{
+                    data: [fatturatoReale, costiReali],
+                    backgroundColor: [emerald, rose],
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%', // Rende la ciambella più sottile ed elegante
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, usePointStyle: true, font: { family: 'Inter', weight: '500' } }
+                    }
+                }
+            }
+        });
+
+        // --- INIZIALIZZAZIONE GRAFICO A BARRE (Dati d'esempio per ora) ---
+        const ctxMonthly = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(ctxMonthly, {
+            type: 'bar',
+            data: {
+                labels: ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'],
+                datasets: [
+                    {
+                        label: 'Fatturato (Mock)',
+                        data: [1200, 1900, 3000, 5000, 2400, 3200, 3100, 2100, 4500, 3800, 4200, 5100],
+                        backgroundColor: emerald,
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    },
+                    {
+                        label: 'Costi (Mock)',
+                        data: [800, 1200, 2100, 1500, 1100, 1800, 1600, 900, 2200, 1900, 2100, 3000],
+                        backgroundColor: rose,
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: slate, drawBorder: false },
+                        ticks: { font: { family: 'Inter' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter' } }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Inter', weight: '500' } }
+                    }
+                }
+            }
+        });
+    </script>
 </section>
 </body>
 </html>

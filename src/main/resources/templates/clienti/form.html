@@ -1,101 +1,145 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layout :: layout(~{::title}, ~{::section})}">
-<head><title>Cliente</title></head>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Anagrafica Cliente', ~{::section})}">
 <body>
 <section>
-  <h2 class="mb-4"
-      th:text="${cliente.id == null} ? 'Nuovo cliente' : 'Modifica cliente'"></h2>
+  <div class="mb-6 flex items-center justify-between">
+    <h2 class="text-2xl font-bold text-slate-800" th:text="${cliente.id == null} ? 'Nuovo Cliente' : 'Modifica Cliente'"></h2>
+    <a href="/clienti" class="text-slate-500 hover:text-slate-700 transition-colors flex items-center">
+      <i class="bi bi-arrow-left me-1"></i>Torna alla lista
+    </a>
+  </div>
 
-  <form method="post" action="/clienti/salva">
+  <form method="post" action="/clienti/salva" th:object="${cliente}" class="max-w-5xl space-y-6">
     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
     <input type="hidden" th:field="*{id}"/>
 
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-header bg-white fw-semibold">Dati anagrafici</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label">Tipo</label>
-            <select th:field="*{tipo}" class="form-select">
-              <option th:each="t : ${tipi}" th:value="${t}"
-                      th:text="${t == T(com.studicommerciali.gestionale.entity.Cliente.TipoCliente).PERSONA_FISICA ? 'Persona fisica' : 'Persona giuridica'}"></option>
-            </select>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+        <h3 class="font-semibold text-slate-800 flex items-center"><i class="bi bi-person-badge text-indigo-500 me-2"></i>Dati Anagrafici</h3>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-3">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Tipo</label>
+          <select id="tipo" th:field="*{tipo}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 bg-white">
+            <option th:each="t : ${tipi}" th:value="${t}" th:text="${t?.name() == 'PERSONA_FISICA' ? 'Persona fisica' : 'Persona giuridica'}"></option>
+          </select>
+        </div>
+        <div class="md:col-span-9">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Ragione sociale / Cognome e nome *</label>
+          <input type="text" id="ragioneSociale" th:field="*{ragioneSociale}" required class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500" th:classappend="${#fields.hasErrors('ragioneSociale')} ? 'border-rose-500 ring-1 ring-rose-500' : ''">
+          <div class="text-rose-500 text-xs mt-1 font-medium" th:if="${#fields.hasErrors('ragioneSociale')}" th:errors="*{ragioneSociale}"></div>
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Codice fiscale</label>
+          <input type="text" id="codiceFiscale" th:field="*{codiceFiscale}" maxlength="16" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 uppercase focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Partita IVA</label>
+          <div class="flex gap-2">
+            <input type="text" id="partitaIvaInput" th:field="*{partitaIva}" maxlength="11" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+            <button type="button" class="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium transition-colors shadow-sm" onclick="cercaPartitaIva()" title="Autocompila dati da P.IVA">
+              <i class="bi bi-search"></i>
+            </button>
           </div>
-          <div class="col-md-9">
-            <label class="form-label">Ragione sociale / Cognome e nome *</label>
-            <input type="text" th:field="*{ragioneSociale}"
-                   class="form-control" required>
-            <div class="text-danger small"
-                 th:if="${#fields.hasErrors('ragioneSociale')}"
-                 th:errors="*{ragioneSociale}"></div>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Codice fiscale</label>
-            <input type="text" th:field="*{codiceFiscale}"
-                   class="form-control" maxlength="16">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Partita IVA</label>
-            <input type="text" th:field="*{partitaIva}"
-                   class="form-control" maxlength="11">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Codice SDI</label>
-            <input type="text" th:field="*{codiceSdi}"
-                   class="form-control" maxlength="7">
-          </div>
+          <div id="apiStatus" class="text-xs mt-1"></div>
+        </div>
+
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Codice SDI</label>
+          <input type="text" th:field="*{codiceSdi}" maxlength="7" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 uppercase focus:ring-2 focus:ring-indigo-500">
         </div>
       </div>
     </div>
 
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-header bg-white fw-semibold">Indirizzo e contatti</div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Indirizzo</label>
-            <input type="text" th:field="*{indirizzo}" class="form-control">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">CAP</label>
-            <input type="text" th:field="*{cap}" class="form-control" maxlength="5">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Città</label>
-            <input type="text" th:field="*{citta}" class="form-control">
-          </div>
-          <div class="col-md-1">
-            <label class="form-label">Prov.</label>
-            <input type="text" th:field="*{provincia}" class="form-control" maxlength="2">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Telefono</label>
-            <input type="tel" th:field="*{telefono}" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Email</label>
-            <input type="email" th:field="*{email}" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">PEC</label>
-            <input type="email" th:field="*{pec}" class="form-control">
-          </div>
-          <div class="col-12">
-            <label class="form-label">Note</label>
-            <textarea th:field="*{note}" class="form-control" rows="2"></textarea>
-          </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+        <h3 class="font-semibold text-slate-800 flex items-center"><i class="bi bi-geo-alt text-indigo-500 me-2"></i>Indirizzo e Contatti</h3>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div class="md:col-span-6">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Indirizzo</label>
+          <input type="text" id="indirizzo" th:field="*{indirizzo}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">CAP</label>
+          <input type="text" id="cap" th:field="*{cap}" maxlength="5" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Città</label>
+          <input type="text" id="citta" th:field="*{citta}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-1">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Prov.</label>
+          <input type="text" id="provincia" th:field="*{provincia}" maxlength="2" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 uppercase text-center focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Telefono</label>
+          <input type="tel" th:field="*{telefono}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Email</label>
+          <input type="email" th:field="*{email}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+        <div class="md:col-span-4">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">PEC</label>
+          <input type="email" th:field="*{pec}" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <div class="md:col-span-12">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Note interne</label>
+          <textarea th:field="*{note}" rows="3" class="w-full border border-slate-300 rounded-lg px-4 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500"></textarea>
         </div>
       </div>
     </div>
 
-    <div class="d-flex gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-floppy me-1"></i>Salva
+    <div class="flex gap-4 pt-4">
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-8 rounded-lg shadow-sm transition-colors flex items-center">
+        <i class="bi bi-floppy me-2"></i>Salva Anagrafica
       </button>
-      <a href="/clienti" class="btn btn-outline-secondary">Annulla</a>
+      <a href="/clienti" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium py-2 px-8 rounded-lg shadow-sm transition-colors text-center">
+        Annulla
+      </a>
     </div>
   </form>
 </section>
+
+<script>
+  function cercaPartitaIva() {
+    const piva = document.getElementById('partitaIvaInput').value;
+    const status = document.getElementById('apiStatus');
+
+    if(piva.length !== 11) {
+      status.innerHTML = "<span class='text-rose-500 font-medium'>Inserire 11 caratteri</span>";
+      return;
+    }
+
+    // Mostro il caricamento
+    status.innerHTML = "<span class='text-indigo-600 font-medium'><i class='bi bi-hourglass-split me-1'></i> Ricerca in corso...</span>";
+
+    fetch('/api/integrazioni/piva/' + piva)
+            .then(response => {
+              if(!response.ok) throw new Error("Azienda non trovata negli archivi.");
+              return response.json();
+            })
+            .then(data => {
+              // Compila i campi della form
+              document.getElementById('ragioneSociale').value = data.ragioneSociale || '';
+              document.getElementById('indirizzo').value = data.indirizzo || '';
+              document.getElementById('cap').value = data.cap || '';
+              document.getElementById('citta').value = data.citta || '';
+              document.getElementById('provincia').value = data.provincia || '';
+
+              // Trattandosi di partita IVA, imposta il tipo a persona giuridica
+              document.getElementById('tipo').value = 'PERSONA_GIURIDICA';
+
+              status.innerHTML = "<span class='text-emerald-600 font-medium'><i class='bi bi-check-circle me-1'></i> Dati importati con successo!</span>";
+            })
+            .catch(error => {
+              status.innerHTML = "<span class='text-rose-500 font-medium'><i class='bi bi-x-circle me-1'></i> " + error.message + "</span>";
+            });
+  }
+</script>
 </body>
 </html>

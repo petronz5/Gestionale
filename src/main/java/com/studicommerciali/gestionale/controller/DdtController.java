@@ -1,9 +1,13 @@
 package com.studicommerciali.gestionale.controller;
 
+import com.studicommerciali.gestionale.entity.Articolo;
 import com.studicommerciali.gestionale.entity.Ddt;
+import com.studicommerciali.gestionale.entity.MovimentoMagazzino;
+import com.studicommerciali.gestionale.entity.RigaDdt;
 import com.studicommerciali.gestionale.repository.ArticoloRepository;
 import com.studicommerciali.gestionale.repository.ClienteRepository;
 import com.studicommerciali.gestionale.repository.DdtRepository;
+import com.studicommerciali.gestionale.repository.MovimentoMagazzinoRepository;
 import com.studicommerciali.gestionale.repository.RigaDdtRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Year;
 
 @Controller
@@ -25,6 +30,7 @@ public class DdtController {
     private final ClienteRepository clienteRepo;
     private final ArticoloRepository articoloRepo;
     private final RigaDdtRepository rigaDdtRepo;
+    private final MovimentoMagazzinoRepository movimentiRepo; // Iniezione del repository di Audit Trail
 
     @GetMapping
     public String lista(@RequestParam(required = false, defaultValue = "0") int anno, Model model) {
@@ -72,9 +78,8 @@ public class DdtController {
         ddt.setCliente(clienteRepo.findById(clienteId).orElseThrow());
         ddtRepo.save(ddt);
 
-        ra.addFlashAttribute("successo", "DDT salvato correttamente.");
-        // Dopo aver salvato la testata, rimandiamo al dettaglio per inserire le righe (articoli)
-        return "redirect:/ddt";
+        ra.addFlashAttribute("successo", "Testata DDT salvata correttamente.");
+        return "redirect:/ddt/" + ddt.getId();
     }
 
     @PostMapping("/{id}/elimina")
@@ -92,41 +97,73 @@ public class DdtController {
     public String dettaglio(@PathVariable Long id, Model model) {
         Ddt ddt = ddtRepo.findById(id).orElseThrow(() -> new RuntimeException("DDT non trovato"));
         model.addAttribute("ddt", ddt);
-        model.addAttribute("nuovaRiga", new com.studicommerciali.gestionale.entity.RigaDdt());
-        // Passiamo il catalogo articoli per la tendina
+        model.addAttribute("nuovaRiga", new RigaDdt());
         model.addAttribute("articoli", articoloRepo.findByAttivoTrueOrderByDescrizioneAsc());
         return "ddt/dettaglio";
     }
 
     @PostMapping("/{id}/righe")
     public String aggiungiRiga(@PathVariable Long id,
-                               @ModelAttribute com.studicommerciali.gestionale.entity.RigaDdt riga,
+                               @ModelAttribute RigaDdt riga,
                                @RequestParam(required = false) Long articoloId,
                                RedirectAttributes ra) {
         Ddt ddt = ddtRepo.findById(id).orElseThrow();
         riga.setDdt(ddt);
 
-        // Se l'utente ha selezionato un articolo dal catalogo, preleviamo la descrizione
         if (articoloId != null) {
-            com.studicommerciali.gestionale.entity.Articolo art = articoloRepo.findById(articoloId).orElseThrow();
+            Articolo art = articoloRepo.findById(articoloId).orElseThrow();
             riga.setArticolo(art);
             if (riga.getDescrizione() == null || riga.getDescrizione().isBlank()) {
                 riga.setDescrizione(art.getDescrizione());
             }
+
+            // LOGICA MAGAZZINO E STORICO MOVIMENTI (Se il DDT è per vendita, scarico le giacenze)
+            if (ddt.getCausaleTrasporto() != null && ddt.getCausaleTrasporto().toLowerCase().contains("vendita")) {
+                art.setGiacenza(art.getGiacenza().subtract(riga.getQuantita()));
+                articoloRepo.save(art);
+
+                // Salviamo nello storico movimenti
+                movimentiRepo.save(MovimentoMagazzino.builder()
+                        .articolo(art)
+                        .quantita(riga.getQuantita().negate()) // negativo perché è un'uscita
+                        .causale("Scarico da Vendita")
+                        .riferimentoDocumento("DDT n. " + ddt.getNumero())
+                        .dataMovimento(LocalDateTime.now())
+                        .build());
+            }
         }
 
-        // Calcola l'ordine progressivo della riga
         riga.setOrdine(ddt.getRighe().size() + 1);
         rigaDdtRepo.save(riga);
 
-        ra.addFlashAttribute("successo", "Riga aggiunta al DDT.");
+        ra.addFlashAttribute("successo", "Riga aggiunta al DDT e magazzino aggiornato.");
         return "redirect:/ddt/" + id;
     }
 
     @PostMapping("/righe/{rigaId}/elimina")
     public String eliminaRiga(@PathVariable Long rigaId, @RequestParam Long ddtId, RedirectAttributes ra) {
+        RigaDdt riga = rigaDdtRepo.findById(rigaId).orElseThrow();
+
+        // LOGICA RIPRISTINO MAGAZZINO E STORICO MOVIMENTI (Se annullo una riga, rimetto dentro i pezzi)
+        if (riga.getArticolo() != null && riga.getDdt().getCausaleTrasporto() != null
+                && riga.getDdt().getCausaleTrasporto().toLowerCase().contains("vendita")) {
+
+            Articolo art = riga.getArticolo();
+            art.setGiacenza(art.getGiacenza().add(riga.getQuantita())); // Ricarico nel DB
+            articoloRepo.save(art);
+
+            // Salviamo nello storico movimenti
+            movimentiRepo.save(MovimentoMagazzino.builder()
+                    .articolo(art)
+                    .quantita(riga.getQuantita()) // positivo perché rientra in magazzino
+                    .causale("Ripristino da eliminazione riga DDT")
+                    .riferimentoDocumento("DDT n. " + riga.getDdt().getNumero())
+                    .dataMovimento(LocalDateTime.now())
+                    .build());
+        }
+
         rigaDdtRepo.deleteById(rigaId);
-        ra.addFlashAttribute("successo", "Riga eliminata.");
+        ra.addFlashAttribute("successo", "Riga eliminata e giacenza ripristinata.");
         return "redirect:/ddt/" + ddtId;
     }
 }
