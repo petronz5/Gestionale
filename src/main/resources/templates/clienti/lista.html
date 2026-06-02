@@ -1,21 +1,18 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::section})}">
-<head><title>Clienti</title></head>
+<html lang="it" xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout('Clienti', ~{::section})}">
 <body>
 <section>
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-slate-800">Rubrica Clienti</h2>
         <a href="/clienti/nuovo" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg inline-flex items-center transition-colors shadow-sm">
-            <i class="bi bi-plus-lg me-2"></i>Nuovo cliente
+            <i class="bi bi-person-plus-fill me-2"></i>Nuovo Cliente
         </a>
     </div>
 
-    <div class="mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-        <form method="get" action="/clienti" class="flex gap-2 max-w-lg">
-            <input type="text" name="q" class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Cerca per nome, CF, P.IVA…" th:value="${q}">
-            <button class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg transition-colors shadow-sm" type="submit">
-                <i class="bi bi-search"></i>
-            </button>
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6">
+        <form method="get" action="/clienti" class="flex gap-2">
+            <input type="text" name="q" th:value="${q}" placeholder="Cerca per ragione sociale..." class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+            <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors border border-slate-300">Cerca</button>
         </form>
     </div>
 
@@ -24,40 +21,43 @@
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200">
                 <tr>
-                    <th class="px-6 py-4 font-medium">Nominativo</th>
-                    <th class="px-6 py-4 font-medium">Cod. Fiscale / P.IVA</th>
-                    <th class="px-6 py-4 font-medium">Città</th>
+                    <th class="px-6 py-4 font-medium">Ragione Sociale</th>
+                    <th class="px-6 py-4 font-medium">P.IVA / C.F.</th>
                     <th class="px-6 py-4 font-medium">Contatti</th>
                     <th class="px-6 py-4 font-medium text-right">Azioni</th>
                 </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                 <tr th:each="c : ${clienti}" class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4">
-                        <a th:href="@{/clienti/{id}(id=${c.id})}" class="font-semibold text-indigo-600 hover:text-indigo-800" th:text="${c.displayName}"></a>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-slate-600" th:text="${c.codiceFiscale ?: c.partitaIva ?: '—'}"></td>
-                    <td class="px-6 py-4 text-sm text-slate-600" th:text="${c.citta ?: '—'}"></td>
+                    <td class="px-6 py-4 font-medium text-slate-800" th:text="${c.ragioneSociale}"></td>
+
                     <td class="px-6 py-4 text-sm text-slate-600">
-                        <div th:text="${c.telefono ?: '—'}"></div>
-                        <div class="text-xs text-slate-400" th:text="${c.email ?: ''}"></div>
+                        <span th:if="${c.codiceFiscale != null and !c.codiceFiscale.isEmpty()}" th:text="${c.codiceFiscale}"></span>
+                        <span th:if="${(c.codiceFiscale == null or c.codiceFiscale.isEmpty()) and c.partitaIva != null and !c.partitaIva.isEmpty()}" th:text="${c.partitaIva}"></span>
+                        <span th:if="${(c.codiceFiscale == null or c.codiceFiscale.isEmpty()) and (c.partitaIva == null or c.partitaIva.isEmpty())}">—</span>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-slate-600">
+                        <div th:if="${c.email != null and !c.email.isEmpty()}"><i class="bi bi-envelope me-1"></i><span th:text="${c.email}"></span></div>
+                        <div th:if="${c.telefono != null and !c.telefono.isEmpty()}"><i class="bi bi-telephone me-1"></i><span th:text="${c.telefono}"></span></div>
                     </td>
                     <td class="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                        <a th:href="@{/clienti/{id}(id=${c.id})}" class="inline-flex items-center justify-center w-8 h-8 rounded bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" title="Dettaglio">
+                            <i class="bi bi-eye"></i>
+                        </a>
                         <a th:href="@{/clienti/{id}/modifica(id=${c.id})}" class="inline-flex items-center justify-center w-8 h-8 rounded bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors" title="Modifica">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form method="post" th:action="@{/clienti/{id}/elimina(id=${c.id})}" class="inline-block" onsubmit="return confirm('Disattivare questo cliente?')">
+                        <form method="post" th:action="@{/clienti/{id}/elimina(id=${c.id})}" class="inline-block" onsubmit="return confirm('Vuoi disattivare questo cliente?')">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                            <button class="inline-flex items-center justify-center w-8 h-8 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Elimina">
+                            <button class="inline-flex items-center justify-center w-8 h-8 rounded bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors" title="Disattiva">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
                     </td>
                 </tr>
                 <tr th:if="${#lists.isEmpty(clienti)}">
-                    <td colspan="5" class="px-6 py-12 text-center text-slate-500">
-                        Nessun cliente trovato.
-                    </td>
+                    <td colspan="4" class="px-6 py-12 text-center text-slate-500">Nessun cliente in rubrica.</td>
                 </tr>
                 </tbody>
             </table>

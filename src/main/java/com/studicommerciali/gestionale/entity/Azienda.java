@@ -7,7 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "aziende") // Questo è il Tenant
+@Table(name = "aziende")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Azienda {
 
@@ -29,7 +29,9 @@ public class Azienda {
     private String email;
     private String telefono;
 
-    // Utile per sapere se il cliente ti sta pagando l'abbonamento o se bloccargli l'accesso
+    // Il campo mancante che faceva crashare Thymeleaf!
+    private String iban;
+
     @Column(nullable = false)
     private boolean abbonamentoAttivo = true;
 

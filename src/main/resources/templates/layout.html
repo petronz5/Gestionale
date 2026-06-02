@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it" xmlns:th="http://www.thymeleaf.org" th:fragment="layout(title, content)" xmlns:sec="http://www.w3.org/1999/xhtml">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:fragment="layout(title, content)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,6 +47,11 @@
             <a href="/scadenze" class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors">
                 <i class="bi bi-calendar-event w-6 text-center me-2 text-lg"></i>Scadenzario
             </a>
+
+            <a href="/cassa" class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors">
+                <i class="bi bi-cash-coin w-6 text-center me-2 text-lg"></i>Prima Nota / Cassa
+            </a>
+
             <a href="/articoli" class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors">
                 <i class="bi bi-box-seam w-6 text-center me-2 text-lg"></i>Articoli & Magazzino
             </a>
@@ -61,6 +66,9 @@
         <div class="p-4 bg-slate-950">
             <form method="post" action="/logout">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <a href="/impostazioni" class="flex items-center px-3 py-2 rounded-lg hover:bg-slate-800 hover:text-white transition-colors mb-2 text-slate-400 block">
+                    <i class="bi bi-gear w-6 text-center me-2 text-lg"></i>Impostazioni Azienda
+                </a>
                 <button type="submit" class="w-full flex items-center justify-center px-4 py-2 border border-slate-700 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm">
                     <i class="bi bi-box-arrow-right me-2"></i>Esci dal sistema
                 </button>

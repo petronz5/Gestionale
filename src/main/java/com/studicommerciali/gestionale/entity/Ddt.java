@@ -49,6 +49,11 @@ public class Ddt {
 
     private String vettore;
 
+    // Riferimento al Tenant SaaS (Ogni articolo appartiene a una sola azienda)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "azienda_id", nullable = false)
+    private Azienda azienda;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatoDdt stato = StatoDdt.DA_FATTURARE;

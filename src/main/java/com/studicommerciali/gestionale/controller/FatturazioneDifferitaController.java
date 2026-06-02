@@ -4,6 +4,7 @@ import com.studicommerciali.gestionale.entity.*;
 import com.studicommerciali.gestionale.repository.ClienteRepository;
 import com.studicommerciali.gestionale.repository.DdtRepository;
 import com.studicommerciali.gestionale.repository.FatturaRepository;
+import com.studicommerciali.gestionale.repository.UtenteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
@@ -24,18 +26,34 @@ public class FatturazioneDifferitaController {
     private final DdtRepository ddtRepo;
     private final ClienteRepository clienteRepo;
     private final FatturaRepository fatturaRepo;
+    private final UtenteRepository utenteRepo; // Aggiunto per il SaaS
+
+    // Metodo di supporto SaaS
+    private Azienda getAziendaLoggata(Principal principal) {
+        Utente utente = utenteRepo.findByUsername(principal.getName()).orElseThrow();
+        return utente.getAzienda();
+    }
 
     @GetMapping
-    public String index(Model model) {
-        // Mostra solo i clienti che aspettano di essere fatturati
-        model.addAttribute("clienti", ddtRepo.findClientiDaFatturare());
+    public String index(Model model, Principal principal) {
+        Azienda miaAzienda = getAziendaLoggata(principal);
+
+        // Cerca i clienti da fatturare limitatamente alla PROPRIA azienda
+        model.addAttribute("clienti", ddtRepo.findClientiDaFatturareAzienda(miaAzienda, Ddt.StatoDdt.DA_FATTURARE));
         return "differita/index";
     }
 
     @GetMapping("/cliente/{id}")
-    public String dettaglioCliente(@PathVariable Long id, Model model) {
+    public String dettaglioCliente(@PathVariable Long id, Model model, Principal principal) {
+        Azienda miaAzienda = getAziendaLoggata(principal);
         Cliente cliente = clienteRepo.findById(id).orElseThrow();
-        List<Ddt> ddts = ddtRepo.findByClienteIdAndStatoOrderByDataDocumentoAsc(id, Ddt.StatoDdt.DA_FATTURARE);
+
+        // Controllo di sicurezza SaaS
+        if (!cliente.getAzienda().getId().equals(miaAzienda.getId())) {
+            throw new SecurityException("Accesso Negato");
+        }
+
+        List<Ddt> ddts = ddtRepo.findByAziendaAndClienteIdAndStatoOrderByDataDocumentoAsc(miaAzienda, id, Ddt.StatoDdt.DA_FATTURARE);
 
         model.addAttribute("cliente", cliente);
         model.addAttribute("ddts", ddts);
@@ -43,16 +61,25 @@ public class FatturazioneDifferitaController {
     }
 
     @PostMapping("/genera")
-    @Transactional // Fondamentale: se qualcosa va storto, annulla tutte le modifiche al database
+    @Transactional
     public String generaFattura(@RequestParam Long clienteId,
                                 @RequestParam List<Long> ddtIds,
+                                Principal principal,
                                 RedirectAttributes ra) {
 
+        Azienda miaAzienda = getAziendaLoggata(principal);
         Cliente cliente = clienteRepo.findById(clienteId).orElseThrow();
+
+        // Controllo di sicurezza SaaS
+        if (!cliente.getAzienda().getId().equals(miaAzienda.getId())) {
+            throw new SecurityException("Accesso Negato");
+        }
+
         int annoCorrente = Year.now().getValue();
 
         // 1. Inizializza la nuova Fattura
         Fattura nuovaFattura = new Fattura();
+        nuovaFattura.setAzienda(miaAzienda); // Impostiamo il tenant SaaS
         nuovaFattura.setTipo(Fattura.TipoFattura.ATTIVA);
         nuovaFattura.setStato(Fattura.StatoFattura.BOZZA);
         nuovaFattura.setCliente(cliente);
@@ -60,16 +87,17 @@ public class FatturazioneDifferitaController {
         nuovaFattura.setDataEmissione(LocalDate.now());
         nuovaFattura.setAliquotaIva(new BigDecimal("22.00"));
 
-        Integer ultimoNum = fatturaRepo.ultimoNumero(annoCorrente, Fattura.TipoFattura.ATTIVA);
+        Integer ultimoNum = fatturaRepo.ultimoNumero(miaAzienda, annoCorrente, Fattura.TipoFattura.ATTIVA);
         nuovaFattura.setNumero(String.valueOf(ultimoNum != null ? ultimoNum + 1 : 1));
 
-        // Note per indicare i riferimenti
         StringBuilder riferimenti = new StringBuilder("Fatturazione differita DDT: ");
 
-        // 2. Trasforma le righe dei DDT in righe della Fattura
         int ordine = 1;
         for (Long ddtId : ddtIds) {
             Ddt ddt = ddtRepo.findById(ddtId).orElseThrow();
+
+            // Verifica di sicurezza aggiuntiva sulle singole righe
+            if(!ddt.getAzienda().getId().equals(miaAzienda.getId())) continue;
 
             riferimenti.append("n.").append(ddt.getNumero()).append(" del ").append(ddt.getDataDocumento()).append("; ");
 
@@ -80,7 +108,6 @@ public class FatturazioneDifferitaController {
                 rFatt.setQuantita(rDdt.getQuantita());
                 rFatt.setOrdine(ordine++);
 
-                // Se c'è un articolo collegato, recuperiamo il prezzo e l'IVA per calcolare i totali
                 if (rDdt.getArticolo() != null) {
                     Articolo art = rDdt.getArticolo();
                     rFatt.setPrezzoUnitario(art.getPrezzoBase());
@@ -90,24 +117,20 @@ public class FatturazioneDifferitaController {
                     rFatt.setPrezzoUnitario(BigDecimal.ZERO);
                 }
 
-                // Ricalcolo degli importi della singola riga
                 rFatt.ricalcola();
                 nuovaFattura.getRighe().add(rFatt);
             }
 
-            // 3. Segniamo il DDT come FATTURATO
             ddt.setStato(Ddt.StatoDdt.FATTURATO);
             ddtRepo.save(ddt);
         }
 
         nuovaFattura.setNote(riferimenti.toString());
-
-        // 4. Ricalcolo i totali globali della fattura
         nuovaFattura.ricalcolaTotali();
+
         Fattura fatturaSalvata = fatturaRepo.save(nuovaFattura);
 
         ra.addFlashAttribute("successo", "Fattura differita generata con successo!");
-        // Rimanda direttamente alla fattura appena generata
         return "redirect:/fatture/" + fatturaSalvata.getId();
     }
 }

@@ -71,6 +71,10 @@ public class Fattura {
     @Column(columnDefinition = "TEXT")
     private String note;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "azienda_id", nullable = false)
+    private Azienda azienda;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -103,6 +107,7 @@ public class Fattura {
             return fornitore.getRagioneSociale();
         return "N/D";
     }
+
 
     public enum TipoFattura  { ATTIVA, PASSIVA, NOTA_CREDITO, PREVENTIVO }
     public enum StatoFattura { BOZZA, EMESSA, PAGATA, SCADUTA, ANNULLATA, ACCETTATA, RIFIUTATA }

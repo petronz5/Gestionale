@@ -3,42 +3,54 @@ package com.studicommerciali.gestionale.service;
 import com.studicommerciali.gestionale.entity.Utente;
 import com.studicommerciali.gestionale.repository.UtenteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Importazione fondamentale
+
+import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UtenteRepository utenteRepository;
+    private final UtenteRepository utenteRepo;
 
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("\n\n=== 🚦 INIZIO CONTROLLO LOGIN PER: " + username + " 🚦 ===");
+    @Transactional // <-- LA MAGIA CHE RISOLVE L'ERRORE "NO SESSION"
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        System.out.println("======> TENTATIVO DI LOGIN PER: " + usernameOrEmail);
 
-        Utente utente = utenteRepository.findByUsername(username)
-                .orElseThrow(() -> {
-                    System.out.println("❌ ERRORE: L'utente '" + username + "' NON esiste nel database!");
-                    return new UsernameNotFoundException("Utente non trovato");
-                });
+        Utente utente = utenteRepo.findByUsername(usernameOrEmail).orElse(null);
 
-        System.out.println("✅ Utente trovato nel database!");
-        System.out.println("👉 Hash memorizzato: " + utente.getPassword());
-        System.out.println("👉 Lunghezza Hash: " + utente.getPassword().length() + " caratteri (ATTENZIONE: DEVE essere 60!)");
-        System.out.println("👉 Stato Attivo: " + utente.isAttivo());
+        if (utente == null) {
+            utente = utenteRepo.findByEmail(usernameOrEmail)
+                    .orElseThrow(() -> {
+                        System.out.println("======> ERRORE: Utente non trovato nel Database!");
+                        return new UsernameNotFoundException("Utente non trovato");
+                    });
+        }
 
-        String ruolo = utente.getRuolo().startsWith("ROLE_") ? utente.getRuolo() : "ROLE_" + utente.getRuolo();
-        System.out.println("👉 Ruolo Assegnato: " + ruolo);
-        System.out.println("=== 🚦 FINE PREPARAZIONE UTENTE 🚦 ===\n\n");
+        if (!utente.isAttivo()) {
+            System.out.println("======> ERRORE: L'utente è disattivato!");
+            throw new RuntimeException("Utente disattivato dall'amministratore");
+        }
 
-        return User.builder()
-                .username(utente.getUsername())
-                .password(utente.getPassword())
-                .authorities(ruolo)
-                .disabled(!utente.isAttivo())
-                .build();
+        // Ora che c'è @Transactional, Hibernate riesce a leggere l'Azienda senza crashare
+        if (utente.getAzienda() != null && !utente.getAzienda().isAbbonamentoAttivo()) {
+            System.out.println("======> ERRORE: Abbonamento Azienda scaduto!");
+            throw new RuntimeException("L'abbonamento della tua Azienda è sospeso.");
+        }
+
+        System.out.println("======> UTENTE TROVATO CON SUCCESSO: " + utente.getUsername());
+
+        return new User(
+                utente.getUsername(),
+                utente.getPassword(),
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + utente.getRuolo()))
+        );
     }
 }

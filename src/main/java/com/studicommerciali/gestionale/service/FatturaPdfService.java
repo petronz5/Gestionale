@@ -2,6 +2,7 @@ package com.studicommerciali.gestionale.service;
 
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
+import com.studicommerciali.gestionale.entity.Azienda;
 import com.studicommerciali.gestionale.entity.Fattura;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,22 @@ public class FatturaPdfService {
             Font fontDati = FontFactory.getFont(FontFactory.HELVETICA, 12);
             Font fontBold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
 
-            // Intestazione Azienda (Mittente)
-            document.add(new Paragraph("LA TUA AZIENDA S.R.L.", fontTitolo));
-            document.add(new Paragraph("Via Roma 1, 00100 Roma (RM) - P.IVA 01234567890", fontDati));
+            // Lettura dinamica dei dati in ottica Multi-Tenant SaaS
+            Azienda az = fattura.getAzienda();
+            if (az != null) {
+                document.add(new Paragraph(az.getRagioneSociale().toUpperCase(), fontTitolo));
+                String indirizzoCompleto = (az.getIndirizzo() != null ? az.getIndirizzo() : "") + " " +
+                        (az.getCap() != null ? az.getCap() : "") + " " +
+                        (az.getCitta() != null ? az.getCitta() : "") + " (" +
+                        (az.getProvincia() != null ? az.getProvincia() : "") + ")";
+                document.add(new Paragraph(indirizzoCompleto + " - P.IVA: " + az.getPartitaIva(), fontDati));
+                if (az.getIban() != null && !az.getIban().isBlank()) {
+                    document.add(new Paragraph("IBAN per il saldo: " + az.getIban(), fontDati));
+                }
+            } else {
+                // Fallback di emergenza
+                document.add(new Paragraph("GESTIONALE PMI SAAS PROVIDER", fontTitolo));
+            }
             document.add(new Paragraph(" "));
             document.add(new Paragraph(" "));
 

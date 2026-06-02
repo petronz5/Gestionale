@@ -52,6 +52,10 @@ public class Scadenza {
     @JoinColumn(name = "fattura_id")
     private Fattura fattura;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "azienda_id", nullable = false)
+    private Azienda azienda;
+
     @Column(columnDefinition = "TEXT")
     private String note;
 

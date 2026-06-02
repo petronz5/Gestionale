@@ -52,6 +52,10 @@ public class Articolo {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "azienda_id", nullable = false)
+    private Azienda azienda;
+
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
